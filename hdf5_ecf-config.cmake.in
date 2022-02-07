@@ -1,0 +1,10 @@
+@PACKAGE_INIT@
+
+if(NOT TARGET hdf5_ecf_codec)
+    include("${CMAKE_CURRENT_LIST_DIR}/hdf5_ecf-targets.cmake")
+endif(NOT TARGET hdf5_ecf_codec)
+
+# Print messages information # if requested
+if(NOT hdf5_ecf_codec_FIND_QUIETLY)
+    message(STATUS "Found hdf5_ecf_codec : ${PACKAGE_PREFIX_DIR} (found version: @PROJECT_VERSION@)")
+endif(NOT hdf5_ecf_codec_FIND_QUIETLY)
