@@ -9,13 +9,18 @@ if(NOT CMAKE_BUILD_TYPE)
         FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
-if(APPLE)
-    set(PLUGIN_INSTALL_PATH "/opt/local/lib/hdf5/" CACHE PATH "HDF5 plugin installation path")
-elseif(WIN32)
-    set(PLUGIN_INSTALL_PATH "$ENV{ALLUSERSPROFILE}/hdf5/lib/plugin/" CACHE PATH "HDF5 plugin installation path")
-else()
-    set(PLUGIN_INSTALL_PATH "/usr/local/hdf5/lib/plugin" CACHE PATH "HDF5 plugin installation path")
-endif()
+set(HDF5_ECF_PLUGIN_BUILD_PATH "${CMAKE_BINARY_DIR}/lib/hdf5/plugin" CACHE INTERNAL "" FORCE)
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT AND NOT CMAKE_INSTALL_PREFIX)
+    if(APPLE)
+        set(HDF5_ECF_PLUGIN_INSTALL_PATH "/opt/local/lib/hdf5/" CACHE INTERNAL "" FORCE)
+    elseif(WIN32)
+        set(HDF5_ECF_PLUGIN_INSTALL_PATH "$ENV{ALLUSERSPROFILE}/hdf5/lib/plugin/" CACHE INTERNAL "" FORCE)
+    else()
+        set(HDF5_ECF_PLUGIN_INSTALL_PATH "/usr/local/hdf5/lib/plugin" CACHE INTERNAL "" FORCE)
+    endif()
+else(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT AND NOT CMAKE_INSTALL_PREFIX)
+    set(HDF5_ECF_PLUGIN_INSTALL_PATH "${CMAKE_INSTALL_PREFIX}/lib/hdf5/plugin" CACHE INTERNAL "" FORCE)
+endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT AND NOT CMAKE_INSTALL_PREFIX)
 
 if(WIN32)
     set(CMAKE_DEBUG_POSTFIX "_d")
@@ -36,7 +41,7 @@ if (BUILD_TESTING)
     target_link_libraries(gtest_ecf_codec PRIVATE hdf5_ecf_codec GTest::GTest GTest::Main)
     add_test(
         NAME ecf_codec
-        COMMAND $<TARGET_FILE:gtest_ecf_codec> --gtest_color=yes --gtest_output=xml:${CMAKE_BINARY_DIR}/gtest/ecf_codec.xml
+        COMMAND $<TARGET_FILE:gtest_ecf_codec> --gtest_color=yes --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/gtest/ecf_codec.xml
     )
 endif ()
 
@@ -45,10 +50,11 @@ include(GenerateExportHeader)
 generate_export_header(hdf5_ecf_codec BASE_NAME ecf_codec)
 target_include_directories(hdf5_ecf_codec 
     PUBLIC
-        "$<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>"
+        "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..>"
+        "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>"
         "$<INSTALL_INTERFACE:include>"
 )
-install(FILES "${CMAKE_BINARY_DIR}/ecf_codec_export.h"
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/ecf_codec_export.h"
         DESTINATION "include/hdf5_ecf"
         COMPONENT hdf5-ecf-codec-dev
 )
@@ -106,7 +112,7 @@ write_basic_package_version_file(
     "hdf5_ecf-config-version.cmake"
     COMPATIBILITY ExactVersion
 )
-install(FILES "${CMAKE_BINARY_DIR}/hdf5_ecf-config.cmake" "${CMAKE_BINARY_DIR}/hdf5_ecf-config-version.cmake"
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/hdf5_ecf-config.cmake" "${CMAKE_CURRENT_BINARY_DIR}/hdf5_ecf-config-version.cmake"
         DESTINATION share/cmake/hdf5_ecf
         COMPONENT hdf5-ecf-codec-dev
 )
@@ -122,14 +128,21 @@ add_library(hdf5_ecf_plugin SHARED ecf_h5plugin.cpp)
 set_target_properties(hdf5_ecf_plugin PROPERTIES OUTPUT_NAME H5Zecf)
 target_link_libraries(hdf5_ecf_plugin PUBLIC hdf5_ecf_codec ${HDF5_LIBRARIES})
 target_include_directories(hdf5_ecf_plugin PUBLIC ${HDF5_INCLUDE_DIRS})
+file(MAKE_DIRECTORY "${HDF5_ECF_PLUGIN_BUILD_PATH}")
+add_custom_command(
+    TARGET hdf5_ecf_plugin POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:hdf5_ecf_plugin>" "${HDF5_ECF_PLUGIN_BUILD_PATH}"
+    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:hdf5_ecf_codec>" "${HDF5_ECF_PLUGIN_BUILD_PATH}"
+)
+
 install(TARGETS hdf5_ecf_plugin
-        RUNTIME DESTINATION ${PLUGIN_INSTALL_PATH} COMPONENT hdf5-plugin-ecf
-        LIBRARY DESTINATION ${PLUGIN_INSTALL_PATH} COMPONENT hdf5-plugin-ecf
+        RUNTIME DESTINATION ${HDF5_ECF_PLUGIN_INSTALL_PATH} COMPONENT hdf5-plugin-ecf
+        LIBRARY DESTINATION ${HDF5_ECF_PLUGIN_INSTALL_PATH} COMPONENT hdf5-plugin-ecf
 )
 if (WIN32)
     # on windows, we put the DLL next to the plugin with a symlink to avoid having to mess with PATH
     install(CODE
-        "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink $<TARGET_FILE:hdf5_ecf_codec> ${PLUGIN_INSTALL_PATH}/$<TARGET_FILE_NAME:hdf5_ecf_codec>)"
+        "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink \"$<TARGET_FILE:hdf5_ecf_codec>\" \"${HDF5_ECF_PLUGIN_INSTALL_PATH}/$<TARGET_FILE_NAME:hdf5_ecf_codec>\")"
     )
 endif()
 

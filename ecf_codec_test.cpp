@@ -85,15 +85,6 @@ TEST(Encoder, encode_too_many_events) {
 
     std::vector<EventCD> events(100000);
     const size_t num_events = events.size();
-    auto expected_buffer    = make_array(
-        // 4 bytes for header
-        HEADER(num_events, false, false),
-        // 8 bytes for absolute t
-        ABSOLUTE_T(events[0].t),
-        // 1 byte for 1 timestamp RLE encoded
-        RLE_T(events[0].t, 1),
-        // 3*4 bytes for x and p
-        PACK_YS_XS_AND_PS_1(events[0]));
 
     std::vector<std::uint8_t> buffer(1000000);
     ASSERT_THROW(encoder(events.data(), events.data() + num_events, buffer.data()), std::runtime_error);
@@ -819,7 +810,7 @@ TEST(Encoder, encode_more_than_15_events_same_t_rle_xyp_packed) {
     auto num_events_list = {16, 25, 254, 255, 256, 312, 1891, 18923, 65535};
     for (auto &num_events : num_events_list) {
         std::vector<EventCD> events;
-        for (size_t i = 0; i < num_events; ++i) {
+        for (int i = 0; i < num_events; ++i) {
             events += EventCD{(unsigned short)(dx(mt_rand)), (unsigned short)(dy(mt_rand)), 1, 10000};
         }
 
@@ -832,7 +823,7 @@ TEST(Encoder, encode_more_than_15_events_same_t_rle_xyp_packed) {
         expected_buffer += RLE_T(0, 0b1111);
         // 2 other byte for counts
         expected_buffer += make_array(EXPLODE16(num_events));
-        for (size_t i = 0; (i + 4) <= num_events; i += 4) {
+        for (int i = 0; (i + 4) <= num_events; i += 4) {
             // 3*4 bytes for 4 y, x and p
             expected_buffer += make_array(PACK_YS_XS_AND_PS_4(events[i], events[i + 1], events[i + 2], events[i + 3]));
         }
@@ -871,7 +862,7 @@ TEST(Decoder, decode_more_than_15_events_same_t_rle_xyp_packed) {
     auto num_expected_events_list = {16, 25, 254, 255, 256, 312, 1891, 18923, 65535};
     for (auto &num_expected_events : num_expected_events_list) {
         std::vector<EventCD> expected_events;
-        for (size_t i = 0; i < num_expected_events; ++i) {
+        for (int i = 0; i < num_expected_events; ++i) {
             expected_events += EventCD{(unsigned short)(dx(mt_rand)), (unsigned short)(dy(mt_rand)), 1, 10000};
         }
 
@@ -884,7 +875,7 @@ TEST(Decoder, decode_more_than_15_events_same_t_rle_xyp_packed) {
         buffer += RLE_T(0, 0b1111);
         // 2 other byte for counts
         buffer += make_array(EXPLODE16(num_expected_events));
-        for (size_t i = 0; (i + 4) <= num_expected_events; i += 4) {
+        for (int i = 0; (i + 4) <= num_expected_events; i += 4) {
             // 3*4 bytes for 4 y, x and p
             buffer += make_array(PACK_YS_XS_AND_PS_4(expected_events[i], expected_events[i + 1], expected_events[i + 2],
                                                      expected_events[i + 3]));
@@ -934,7 +925,7 @@ TEST(Encoder, encode_more_than_31_events_same_t_rle_same_y_rle_xp_packed) {
     auto num_events_list = {32, 43, 254, 255, 256, 312, 1891, 18923, 65535};
     for (auto &num_events : num_events_list) {
         std::vector<EventCD> events;
-        for (size_t i = 0; i < num_events; ++i) {
+        for (int i = 0; i < num_events; ++i) {
             events += EventCD{(unsigned short)(dx(mt_rand)), (unsigned short)(873), 1, 10000};
         }
 
@@ -951,7 +942,7 @@ TEST(Encoder, encode_more_than_31_events_same_t_rle_same_y_rle_xp_packed) {
         expected_buffer += make_array(RLE_Y(events[0].y, 0b11111));
         // 2 other bytes for counts
         expected_buffer += make_array(EXPLODE16(num_events));
-        for (size_t i = 0; (i + 4) <= num_events; i += 4) {
+        for (int i = 0; (i + 4) <= num_events; i += 4) {
             // 2*4 bytes for 4 x and p
             expected_buffer += make_array(PACK_XS_AND_PS_4(events[i], events[i + 1], events[i + 2], events[i + 3]));
         }
@@ -990,7 +981,7 @@ TEST(Decoder, decode_more_than_31_events_same_t_rle_same_y_rle_xp_packed) {
     auto num_expected_events_list = {32, 43, 254, 255, 256, 312, 1891, 18923, 65535};
     for (auto &num_expected_events : num_expected_events_list) {
         std::vector<EventCD> expected_events;
-        for (size_t i = 0; i < num_expected_events; ++i) {
+        for (int i = 0; i < num_expected_events; ++i) {
             expected_events += EventCD{(unsigned short)(dx(mt_rand)), (unsigned short)(873), 1, 10000};
         }
 
@@ -1007,7 +998,7 @@ TEST(Decoder, decode_more_than_31_events_same_t_rle_same_y_rle_xp_packed) {
         buffer += make_array(RLE_Y(expected_events[0].y, 0b11111));
         // 2 other bytes for counts
         buffer += make_array(EXPLODE16(num_expected_events));
-        for (size_t i = 0; (i + 4) <= num_expected_events; i += 4) {
+        for (int i = 0; (i + 4) <= num_expected_events; i += 4) {
             // 2*4 bytes for 4 x and p
             buffer += make_array(PACK_XS_AND_PS_4(expected_events[i], expected_events[i + 1], expected_events[i + 2],
                                                   expected_events[i + 3]));
@@ -1053,7 +1044,7 @@ TEST(Encoder, encode_more_than_127_events_same_t_rle_same_y_rle_x_masked) {
     auto num_events_list = {128, 133, 254, 255, 256, 312, 1891, 18923, 65535};
     for (auto &num_events : num_events_list) {
         std::vector<EventCD> events;
-        for (size_t i = 0; i < num_events; ++i) {
+        for (int i = 0; i < num_events; ++i) {
             events += EventCD{(unsigned short)(i % 1278), (unsigned short)(873), 1, 10000};
         }
 
@@ -1070,7 +1061,7 @@ TEST(Encoder, encode_more_than_127_events_same_t_rle_same_y_rle_x_masked) {
         expected_buffer += make_array(RLE_Y(events[0].y, 0b11111));
         // 2 other bytes for count
         expected_buffer += make_array(EXPLODE16(num_events));
-        for (size_t i = 0; (i + 6) <= num_events; i += 6) {
+        for (int i = 0; (i + 6) <= num_events; i += 6) {
             // 2 bytes for x masked
             expected_buffer += make_array(MASK_X(events[i].x, 0b11111));
         }
@@ -1100,7 +1091,7 @@ TEST(Decoder, decode_more_than_127_events_same_t_rle_same_y_rle_x_masked) {
     auto num_expected_events_list = {128, 133, 254, 255, 256, 312, 1891, 18923, 65535};
     for (auto &num_expected_events : num_expected_events_list) {
         std::vector<EventCD> expected_events;
-        for (size_t i = 0; i < num_expected_events; ++i) {
+        for (int i = 0; i < num_expected_events; ++i) {
             expected_events += EventCD{(unsigned short)(i % 1278), (unsigned short)(873), 1, 10000};
         }
 
@@ -1117,7 +1108,7 @@ TEST(Decoder, decode_more_than_127_events_same_t_rle_same_y_rle_x_masked) {
         buffer += make_array(RLE_Y(expected_events[0].y, 0b11111));
         // 2 other bytes for counts
         buffer += make_array(EXPLODE16(num_expected_events));
-        for (size_t i = 0; (i + 6) <= num_expected_events; i += 6) {
+        for (int i = 0; (i + 6) <= num_expected_events; i += 6) {
             // 2 bytes for x masked
             buffer += make_array(MASK_X(expected_events[i].x, 0b11111));
         }
