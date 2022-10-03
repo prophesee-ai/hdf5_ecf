@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.14.0)
 cmake_policy(SET CMP0087 NEW)
 project(hdf5_ecf VERSION 1.0.0)
+set(HDF5_ECF_PROJECT_VERSION "${PROJECT_VERSION}" CACHE INTERNAL "")
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING
@@ -120,7 +121,7 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/hdf5_ecf-config.cmake" "${CMAKE_CURRE
 # HDF5 ECF filter 
 install(FILES ecf_h5filter.h
         DESTINATION "include/hdf5_ecf"
-        COMPONENT hdf5-plugin-ecf
+        COMPONENT hdf5-plugin-ecf-local-install
 )
 
 # HDF5 ECF plugin 
@@ -136,8 +137,40 @@ add_custom_command(
 )
 
 install(TARGETS hdf5_ecf_plugin
-        RUNTIME DESTINATION ${HDF5_ECF_PLUGIN_INSTALL_PATH} COMPONENT hdf5-plugin-ecf
-        LIBRARY DESTINATION ${HDF5_ECF_PLUGIN_INSTALL_PATH} COMPONENT hdf5-plugin-ecf
+        RUNTIME DESTINATION "${HDF5_ECF_PLUGIN_INSTALL_PATH}" COMPONENT hdf5-plugin-ecf-local-install
+        LIBRARY DESTINATION "${HDF5_ECF_PLUGIN_INSTALL_PATH}" COMPONENT hdf5-plugin-ecf-local-install
+)
+install(CODE "message(NOTICE \"\n\nNote:\n=====\nTo use the HDF5 ECF plugin, it may be necessary to append the path '${HDF5_ECF_PLUGIN_INSTALL_PATH}' to the HDF5_PLUGIN_PATH environment variable in your session or permanently.\n\")"
+        COMPONENT hdf5-plugin-ecf-local-install
+)
+set (HDF5_ECF_PLUGIN_DEB_INSTALL_PATH "/usr/lib/${CMAKE_CXX_LIBRARY_ARCHITECTURE}/hdf5/plugins" CACHE INTERNAL "" FORCE)
+if (UNIX AND NOT APPLE)
+    find_program(_lsb_release_exec lsb_release)
+    execute_process(COMMAND ${_lsb_release_exec} -cs
+        OUTPUT_VARIABLE _ubuntu_platform
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if ("${_ubuntu_platform}" STREQUAL "jammy")
+        set (HDF5_ECF_PLUGIN_DEB_INSTALL_PATH "/usr/lib/${CMAKE_CXX_LIBRARY_ARCHITECTURE}/hdf5/serial/plugins" CACHE INTERNAL "" FORCE)
+    endif ()
+endif (UNIX AND NOT APPLE)
+install(TARGETS hdf5_ecf_plugin
+        RUNTIME DESTINATION ${HDF5_ECF_PLUGIN_DEB_INSTALL_PATH} COMPONENT hdf5-plugin-ecf EXCLUDE_FROM_ALL
+        LIBRARY DESTINATION ${HDF5_ECF_PLUGIN_DEB_INSTALL_PATH} COMPONENT hdf5-plugin-ecf EXCLUDE_FROM_ALL
+)
+file(
+    WRITE "${CMAKE_CURRENT_BINARY_DIR}/postinst" "\
+#!/usr/bin/env sh\n\
+echo \"\"\n\
+echo \"Note:\"\n\
+echo \"=====\"\n\
+echo \"To use the HDF5 ECF plugin, it may be necessary to run 'set HDF5_PLUGIN_PATH=${HDF5_ECF_PLUGIN_DEB_INSTALL_PATH}:\\$\{HDF5_PLUGIN_PATH\}' in your session or shell initialization script.\"\n\
+echo \"\"\n\
+")
+file(
+    COPY "${CMAKE_CURRENT_BINARY_DIR}/postinst"
+    DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+    FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 )
 if (WIN32)
     # on windows, we put the DLL next to the plugin with a symlink to avoid having to mess with PATH
@@ -146,3 +179,39 @@ if (WIN32)
     )
 endif()
 
+
+# CPack
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "")
+set(CPACK_PACKAGE_VENDOR "Prophesee")
+set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION_FULL})
+set(CPACK_DEBIAN_ARCHIVE_TYPE "gnutar") # Variable introduced in cmake 3.7 (see https://cmake.org/cmake/help/v3.8/release/3.7.html#cpack)
+
+# Follow Debian policy on control files' permissions
+# cf https://cmake.org/cmake/help/v3.10/module/CPackDeb.html#variable:CPACK_DEBIAN_PACKAGE_CONTROL_STRICT_PERMISSION
+set(CPACK_DEBIAN_PACKAGE_CONTROL_STRICT_PERMISSION TRUE)
+set(CPACK_DEBIAN_ENABLE_COMPONENT_DEPENDS ON)
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "support@prophesee.ai Copyright (c) Prophesee S.A.") #required
+set(CPACK_DEBIAN_PACKAGE_HOMEPAGE https://support.prophesee.ai)
+set(CPACK_DEB_COMPONENT_INSTALL ON)
+set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+set(CPACK_COMPONENTS_ALL hdf5-ecf-codec-lib hdf5-ecf-codec-dev hdf5-plugin-ecf)
+
+# Library
+set(CPACK_COMPONENT_HDF5-ECF-CODEC-LIB_DESCRIPTION "HDF5 ECF Codec library")
+set(CPACK_DEBIAN_HDF5-ECF-CODEC-LIB_FILE_NAME "hdf5-ecf-codec-lib-${PROJECT_VERSION}.deb")
+set(CPACK_DEBIAN_HDF5-ECF-CODEC-LIB_PACKAGE_NAME "hdf5-ecf-codec-lib")
+# Dev
+set(CPACK_COMPONENT_HDF5-ECF-CODEC-DEV_DESCRIPTION "HDF5 ECF Codec (C++) files")
+set(CPACK_COMPONENT_HDF5-ECF-CODEC-DEV_DEPENDS hdf5-ecf-codec-lib)
+set(CPACK_DEBIAN_HDF5-ECF-CODEC-DEV_FILE_NAME "hdf5-ecf-codec-dev-${PROJECT_VERSION}.deb")
+set(CPACK_DEBIAN_HDF5-ECF-CODEC-DEV_PACKAGE_NAME "hdf5-ecf-codec-dev")
+set(CPACK_DEBIAN_HDF5-ECF-CODEC-DEV_PACKAGE_DEPENDS libhdf5-dev)
+# Plugin
+set(CPACK_COMPONENT_HDF5-PLUGIN-ECF_DESCRIPTION "HDF5 ECF Plugin")
+set(CPACK_DEBIAN_HDF5-PLUGIN-ECF_FILE_NAME "hdf5-plugin-ecf-${PROJECT_VERSION}.deb")
+set(CPACK_DEBIAN_HDF5-PLUGIN-ECF_PACKAGE_NAME "hdf5-plugin-ecf")
+set(CPACK_COMPONENT_HDF5-PLUGIN-ECF_DEPENDS hdf5-ecf-codec-lib)
+set(CPACK_DEBIAN_HDF5-PLUGIN-ECF_PACKAGE_CONTROL_EXTRA "${CPACK_DEBIAN_HDF5-PLUGIN-ECF_PACKAGE_CONTROL_EXTRA};${CMAKE_CURRENT_BINARY_DIR}/postinst;")
+
+
+include(CPack) # This has to be at the end
