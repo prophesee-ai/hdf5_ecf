@@ -230,7 +230,10 @@ size_t Encoder::getCompressedSize() const {
 }
 
 size_t Encoder::operator()(const EventCD *begin_ev_ptr, const EventCD *end_ev_ptr, std::uint8_t *raw_ev_ptr) {
-    if (std::distance(begin_ev_ptr, end_ev_ptr) > kMaxBufferSize) {
+    if (begin_ev_ptr > end_ev_ptr) {
+        throw std::runtime_error(std::string("No events to encode, check the events range passed"));
+    }
+    if (static_cast<size_t>(std::distance(begin_ev_ptr, end_ev_ptr)) > kMaxBufferSize) {
         throw std::runtime_error(std::string("Too many events to encode in buffer, maximum allowed is ") +
                                  std::to_string(kMaxBufferSize));
     }

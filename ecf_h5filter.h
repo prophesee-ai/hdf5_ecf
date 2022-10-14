@@ -74,7 +74,7 @@ const H5Z_class2_t H5Z_ECF[1] = {{H5Z_CLASS_T_VERS, (H5Z_filter_t)(H5Z_FILTER_EC
                                   "HDF ECF filter; see http://www.hdfgroup.org/services/contributions.html", NULL, NULL,
                                   (H5Z_func_t)(H5Z_filter_ecf)}};
 
-static int ecf_register_h5filter() {
+[[maybe_unused]] static int ecf_register_h5filter() {
     int retval = H5Zregister(H5Z_ECF);
     if (retval < 0) {
         H5Z_ECF_PUSH_ERR("Register ECF", H5E_CANTREGISTER, "Can't register ECF filter");
