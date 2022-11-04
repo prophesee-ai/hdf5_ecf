@@ -39,7 +39,7 @@ include(CTest)
 if (BUILD_TESTING)
     find_package(GTest REQUIRED)
     add_executable(gtest_ecf_codec ecf_codec_test.cpp)
-    target_link_libraries(gtest_ecf_codec PRIVATE hdf5_ecf_codec GTest::GTest GTest::Main)
+    target_link_libraries(gtest_ecf_codec PRIVATE hdf5_ecf_codec GTest::gtest GTest::gtest_main)
     add_test(
         NAME ecf_codec
         COMMAND $<TARGET_FILE:gtest_ecf_codec> --gtest_color=yes --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/gtest/ecf_codec.xml
