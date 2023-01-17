@@ -10,6 +10,7 @@
 #ifndef ECF_CODEC_H
 #define ECF_CODEC_H
 
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 #include "ecf_codec_export.h"
