@@ -121,7 +121,7 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/hdf5_ecf-config.cmake" "${CMAKE_CURRE
 # HDF5 ECF filter 
 install(FILES ecf_h5filter.h
         DESTINATION "include/hdf5_ecf"
-        COMPONENT hdf5-plugin-ecf-local-install
+        COMPONENT hdf5-plugin-ecf-dev
 )
 
 # HDF5 ECF plugin 
@@ -194,7 +194,7 @@ set(CPACK_DEBIAN_PACKAGE_MAINTAINER "support@prophesee.ai Copyright (c) Prophese
 set(CPACK_DEBIAN_PACKAGE_HOMEPAGE https://support.prophesee.ai)
 set(CPACK_DEB_COMPONENT_INSTALL ON)
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
-set(CPACK_COMPONENTS_ALL hdf5-ecf-codec-lib hdf5-ecf-codec-dev hdf5-plugin-ecf)
+set(CPACK_COMPONENTS_ALL hdf5-ecf-codec-lib hdf5-ecf-codec-dev hdf5-plugin-ecf hdf5-plugin-ecf-dev)
 
 # Library
 set(CPACK_COMPONENT_HDF5-ECF-CODEC-LIB_DESCRIPTION "HDF5 ECF Codec library")
@@ -212,6 +212,10 @@ set(CPACK_DEBIAN_HDF5-PLUGIN-ECF_FILE_NAME "hdf5-plugin-ecf-${PROJECT_VERSION}.d
 set(CPACK_DEBIAN_HDF5-PLUGIN-ECF_PACKAGE_NAME "hdf5-plugin-ecf")
 set(CPACK_COMPONENT_HDF5-PLUGIN-ECF_DEPENDS hdf5-ecf-codec-lib)
 set(CPACK_DEBIAN_HDF5-PLUGIN-ECF_PACKAGE_CONTROL_EXTRA "${CPACK_DEBIAN_HDF5-PLUGIN-ECF_PACKAGE_CONTROL_EXTRA};${CMAKE_CURRENT_BINARY_DIR}/postinst;")
-
+# Plugin dev
+set(CPACK_COMPONENT_HDF5-PLUGIN-ECF-DEV_DESCRIPTION "HDF5 ECF Plugin (C++) files")
+set(CPACK_DEBIAN_HDF5-PLUGIN-ECF-DEV_FILE_NAME "hdf5-plugin-ecf-dev-${PROJECT_VERSION}.deb")
+set(CPACK_DEBIAN_HDF5-PLUGIN-ECF-DEV_PACKAGE_NAME "hdf5-plugin-ecf-dev")
+set(CPACK_COMPONENT_HDF5-PLUGIN-ECF-DEV_DEPENDS hdf5-ecf-codec-dev)
 
 include(CPack) # This has to be at the end
