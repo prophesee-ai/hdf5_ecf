@@ -22,6 +22,10 @@
 
 static size_t H5Z_filter_ecf(unsigned int flags, size_t cd_nelmts, const unsigned int cd_values[], size_t nbytes,
                              size_t *buf_size, void **buf) {
+    if (NULL == buf) {
+        return 0;
+    }
+
     void *outbuf = NULL;
     void *inbuf  = NULL;
     inbuf        = *buf;
@@ -31,8 +35,9 @@ static size_t H5Z_filter_ecf(unsigned int flags, size_t cd_nelmts, const unsigne
         ECF::Decoder decoder;
 
         size_t outbuf_size = decoder.getDecompressedSize(reinterpret_cast<const std::uint32_t *>(inbuf));
-        if (NULL == (outbuf = malloc(outbuf_size)))
-            goto error;
+        if (NULL == (outbuf = malloc(outbuf_size))) {
+            return 0;
+        }
 
         const std::uint8_t *begin_in_ptr = reinterpret_cast<const std::uint8_t *>(inbuf),
                            *end_in_ptr   = reinterpret_cast<const std::uint8_t *>(inbuf) + nbytes;
@@ -49,8 +54,9 @@ static size_t H5Z_filter_ecf(unsigned int flags, size_t cd_nelmts, const unsigne
         ECF::Encoder encoder;
 
         size_t outbuf_size = encoder.getCompressedSize();
-        if (NULL == (outbuf = malloc(outbuf_size)))
-            goto error;
+        if (NULL == (outbuf = malloc(outbuf_size))) {
+            return 0;
+        }
 
         const ECF::EventCD *begin_in_ptr = reinterpret_cast<const ECF::EventCD *>(inbuf),
                            *end_in_ptr   = reinterpret_cast<const ECF::EventCD *>(inbuf) + num_events;
@@ -64,12 +70,10 @@ static size_t H5Z_filter_ecf(unsigned int flags, size_t cd_nelmts, const unsigne
         ret_value = outbuf_size;
     }
 
-    if (outbuf != NULL)
+    if (outbuf != NULL) {
         free(outbuf);
+    }
     return ret_value;
-
-error:
-    return 0;
 }
 
 const H5Z_class2_t H5Z_ECF[1] = {{H5Z_CLASS_T_VERS, (H5Z_filter_t)(H5Z_FILTER_ECF), 1, 1,
