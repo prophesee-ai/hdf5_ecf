@@ -10,17 +10,18 @@ if(NOT CMAKE_BUILD_TYPE)
         FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
-set(HDF5_ECF_PLUGIN_BUILD_PATH "${CMAKE_BINARY_DIR}/lib/hdf5/plugin" CACHE INTERNAL "" FORCE)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/hdf5/plugin)
+
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT AND NOT CMAKE_INSTALL_PREFIX)
     if(APPLE)
-        set(HDF5_ECF_PLUGIN_INSTALL_PATH "/opt/local/lib/hdf5/" CACHE INTERNAL "" FORCE)
+        set(HDF5_ECF_PLUGIN_INSTALL_PATH "local/lib/hdf5/" CACHE INTERNAL "" FORCE)
     elseif(WIN32)
-        set(HDF5_ECF_PLUGIN_INSTALL_PATH "$ENV{ALLUSERSPROFILE}/hdf5/lib/plugin/" CACHE INTERNAL "" FORCE)
+        set(HDF5_ECF_PLUGIN_INSTALL_PATH "hdf5/lib/plugin/" CACHE INTERNAL "" FORCE)
     else()
-        set(HDF5_ECF_PLUGIN_INSTALL_PATH "/usr/local/hdf5/lib/plugin" CACHE INTERNAL "" FORCE)
+        set(HDF5_ECF_PLUGIN_INSTALL_PATH "local/hdf5/lib/plugin" CACHE INTERNAL "" FORCE)
     endif()
 else(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT AND NOT CMAKE_INSTALL_PREFIX)
-    set(HDF5_ECF_PLUGIN_INSTALL_PATH "${CMAKE_INSTALL_PREFIX}/lib/hdf5/plugin" CACHE INTERNAL "" FORCE)
+    set(HDF5_ECF_PLUGIN_INSTALL_PATH "lib/hdf5/plugin" CACHE INTERNAL "" FORCE)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT AND NOT CMAKE_INSTALL_PREFIX)
 
 if(WIN32)
@@ -49,7 +50,7 @@ endif ()
 # targets generation and installation
 include(GenerateExportHeader)
 generate_export_header(hdf5_ecf_codec BASE_NAME ecf_codec)
-target_include_directories(hdf5_ecf_codec 
+target_include_directories(hdf5_ecf_codec
     PUBLIC
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..>"
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>"
@@ -118,23 +119,17 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/hdf5_ecf-config.cmake" "${CMAKE_CURRE
         COMPONENT hdf5-ecf-codec-dev
 )
 
-# HDF5 ECF filter 
+# HDF5 ECF filter
 install(FILES ecf_h5filter.h
         DESTINATION "include/hdf5_ecf"
         COMPONENT hdf5-plugin-ecf-dev
 )
 
-# HDF5 ECF plugin 
+# HDF5 ECF plugin
 add_library(hdf5_ecf_plugin SHARED ecf_h5plugin.cpp)
 set_target_properties(hdf5_ecf_plugin PROPERTIES OUTPUT_NAME H5Zecf)
 target_link_libraries(hdf5_ecf_plugin PUBLIC hdf5_ecf_codec ${HDF5_LIBRARIES})
 target_include_directories(hdf5_ecf_plugin PUBLIC ${HDF5_INCLUDE_DIRS})
-file(MAKE_DIRECTORY "${HDF5_ECF_PLUGIN_BUILD_PATH}")
-add_custom_command(
-    TARGET hdf5_ecf_plugin POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:hdf5_ecf_plugin>" "${HDF5_ECF_PLUGIN_BUILD_PATH}"
-    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:hdf5_ecf_codec>" "${HDF5_ECF_PLUGIN_BUILD_PATH}"
-)
 
 install(TARGETS hdf5_ecf_plugin
         RUNTIME DESTINATION "${HDF5_ECF_PLUGIN_INSTALL_PATH}" COMPONENT hdf5-plugin-ecf-local-install
@@ -143,7 +138,7 @@ install(TARGETS hdf5_ecf_plugin
 install(CODE "message(NOTICE \"\n\nNote:\n=====\nTo use the HDF5 ECF plugin, it may be necessary to append the path '${HDF5_ECF_PLUGIN_INSTALL_PATH}' to the HDF5_PLUGIN_PATH environment variable in your session or permanently.\n\")"
         COMPONENT hdf5-plugin-ecf-local-install
 )
-set (HDF5_ECF_PLUGIN_DEB_INSTALL_PATH "/usr/lib/${CMAKE_CXX_LIBRARY_ARCHITECTURE}/hdf5/plugins" CACHE INTERNAL "" FORCE)
+set (HDF5_ECF_PLUGIN_DEB_INSTALL_PATH "lib/${CMAKE_CXX_LIBRARY_ARCHITECTURE}/hdf5/plugins" CACHE INTERNAL "" FORCE)
 if (UNIX AND NOT APPLE)
     find_program(_lsb_release_exec lsb_release)
     execute_process(COMMAND ${_lsb_release_exec} -cs
@@ -151,7 +146,7 @@ if (UNIX AND NOT APPLE)
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
     if ("${_ubuntu_platform}" STREQUAL "jammy")
-        set (HDF5_ECF_PLUGIN_DEB_INSTALL_PATH "/usr/lib/${CMAKE_CXX_LIBRARY_ARCHITECTURE}/hdf5/serial/plugins" CACHE INTERNAL "" FORCE)
+        set (HDF5_ECF_PLUGIN_DEB_INSTALL_PATH "${CMAKE_INSTALL_PREFIX}/lib/${CMAKE_CXX_LIBRARY_ARCHITECTURE}/hdf5/serial/plugins" CACHE INTERNAL "" FORCE)
     endif ()
 endif (UNIX AND NOT APPLE)
 install(TARGETS hdf5_ecf_plugin
