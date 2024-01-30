@@ -138,7 +138,7 @@ install(TARGETS hdf5_ecf_plugin
 install(CODE "message(NOTICE \"\n\nNote:\n=====\nTo use the HDF5 ECF plugin, it may be necessary to append the path '${HDF5_ECF_PLUGIN_INSTALL_PATH}' to the HDF5_PLUGIN_PATH environment variable in your session or permanently.\n\")"
         COMPONENT hdf5-plugin-ecf-local-install
 )
-set (HDF5_ECF_PLUGIN_DEB_INSTALL_PATH "lib/${CMAKE_CXX_LIBRARY_ARCHITECTURE}/hdf5/plugins" CACHE INTERNAL "" FORCE)
+set (HDF5_ECF_PLUGIN_DEB_INSTALL_PATH "/usr/lib/${CMAKE_CXX_LIBRARY_ARCHITECTURE}/hdf5/plugins" CACHE INTERNAL "" FORCE)
 if (UNIX AND NOT APPLE)
     find_program(_lsb_release_exec lsb_release)
     execute_process(COMMAND ${_lsb_release_exec} -cs
