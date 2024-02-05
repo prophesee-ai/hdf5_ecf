@@ -10,15 +10,14 @@ if(NOT CMAKE_BUILD_TYPE)
         FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/hdf5/plugin)
-
+set(HDF5_ECF_PLUGIN_BUILD_PATH "${CMAKE_BINARY_DIR}/lib/hdf5/plugin" CACHE INTERNAL "" FORCE)
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT AND NOT CMAKE_INSTALL_PREFIX)
     if(APPLE)
-        set(HDF5_ECF_PLUGIN_INSTALL_PATH "local/lib/hdf5/" CACHE INTERNAL "" FORCE)
+        set(HDF5_ECF_PLUGIN_INSTALL_PATH "/opt/local/lib/hdf5/" CACHE INTERNAL "" FORCE)
     elseif(WIN32)
-        set(HDF5_ECF_PLUGIN_INSTALL_PATH "hdf5/lib/plugin/" CACHE INTERNAL "" FORCE)
+        set(HDF5_ECF_PLUGIN_INSTALL_PATH "$ENV{ALLUSERSPROFILE}/hdf5/lib/plugin/" CACHE INTERNAL "" FORCE)
     else()
-        set(HDF5_ECF_PLUGIN_INSTALL_PATH "local/hdf5/lib/plugin" CACHE INTERNAL "" FORCE)
+        set(HDF5_ECF_PLUGIN_INSTALL_PATH "/usr/local/hdf5/lib/plugin" CACHE INTERNAL "" FORCE)
     endif()
 else(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT AND NOT CMAKE_INSTALL_PREFIX)
     set(HDF5_ECF_PLUGIN_INSTALL_PATH "lib/hdf5/plugin" CACHE INTERNAL "" FORCE)
@@ -130,6 +129,12 @@ add_library(hdf5_ecf_plugin SHARED ecf_h5plugin.cpp)
 set_target_properties(hdf5_ecf_plugin PROPERTIES OUTPUT_NAME H5Zecf)
 target_link_libraries(hdf5_ecf_plugin PUBLIC hdf5_ecf_codec ${HDF5_LIBRARIES})
 target_include_directories(hdf5_ecf_plugin PUBLIC ${HDF5_INCLUDE_DIRS})
+file(MAKE_DIRECTORY "${HDF5_ECF_PLUGIN_BUILD_PATH}")
+add_custom_command(
+    TARGET hdf5_ecf_plugin POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:hdf5_ecf_plugin>" "${HDF5_ECF_PLUGIN_BUILD_PATH}"
+    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:hdf5_ecf_codec>" "${HDF5_ECF_PLUGIN_BUILD_PATH}"
+)
 
 install(TARGETS hdf5_ecf_plugin
         RUNTIME DESTINATION "${HDF5_ECF_PLUGIN_INSTALL_PATH}" COMPONENT hdf5-plugin-ecf-local-install
@@ -144,7 +149,7 @@ if (UNIX AND NOT APPLE)
     execute_process(COMMAND ${_lsb_release_exec} -cs
         OUTPUT_VARIABLE _ubuntu_platform
         OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
+    )   
     if ("${_ubuntu_platform}" STREQUAL "jammy")
         set (HDF5_ECF_PLUGIN_DEB_INSTALL_PATH "${CMAKE_INSTALL_PREFIX}/lib/${CMAKE_CXX_LIBRARY_ARCHITECTURE}/hdf5/serial/plugins" CACHE INTERNAL "" FORCE)
     endif ()
