@@ -149,9 +149,9 @@ if (UNIX AND NOT APPLE)
     execute_process(COMMAND ${_lsb_release_exec} -cs
         OUTPUT_VARIABLE _ubuntu_platform
         OUTPUT_STRIP_TRAILING_WHITESPACE
-    )   
+    )
     if ("${_ubuntu_platform}" STREQUAL "jammy")
-        set (HDF5_ECF_PLUGIN_DEB_INSTALL_PATH "${CMAKE_INSTALL_PREFIX}/lib/${CMAKE_CXX_LIBRARY_ARCHITECTURE}/hdf5/serial/plugins" CACHE INTERNAL "" FORCE)
+        set (HDF5_ECF_PLUGIN_DEB_INSTALL_PATH "/usr/lib/${CMAKE_CXX_LIBRARY_ARCHITECTURE}/hdf5/serial/plugins" CACHE INTERNAL "" FORCE)
     endif ()
 endif (UNIX AND NOT APPLE)
 install(TARGETS hdf5_ecf_plugin
