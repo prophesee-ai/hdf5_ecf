@@ -29,7 +29,7 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT AND NOT CMAKE_INSTALL_PREFIX)
         set(HDF5_ECF_PLUGIN_INSTALL_PATH "/usr/local/hdf5/lib/plugin" CACHE INTERNAL "" FORCE)
     endif()
 else(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT AND NOT CMAKE_INSTALL_PREFIX)
-    set(HDF5_ECF_PLUGIN_INSTALL_PATH "${CMAKE_INSTALL_PREFIX}/lib/hdf5/plugin" CACHE INTERNAL "" FORCE)
+    set(HDF5_ECF_PLUGIN_INSTALL_PATH "lib/hdf5/plugin" CACHE INTERNAL "" FORCE)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT AND NOT CMAKE_INSTALL_PREFIX)
 
 if(WIN32)
@@ -58,7 +58,7 @@ endif ()
 # targets generation and installation
 include(GenerateExportHeader)
 generate_export_header(hdf5_ecf_codec BASE_NAME ecf_codec)
-target_include_directories(hdf5_ecf_codec 
+target_include_directories(hdf5_ecf_codec
     PUBLIC
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/..>"
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>"
@@ -127,13 +127,13 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/hdf5_ecf-config.cmake" "${CMAKE_CURRE
         COMPONENT hdf5-ecf-codec-dev
 )
 
-# HDF5 ECF filter 
+# HDF5 ECF filter
 install(FILES ecf_h5filter.h
         DESTINATION "include/hdf5_ecf"
         COMPONENT hdf5-plugin-ecf-dev
 )
 
-# HDF5 ECF plugin 
+# HDF5 ECF plugin
 add_library(hdf5_ecf_plugin SHARED ecf_h5plugin.cpp)
 set_target_properties(hdf5_ecf_plugin PROPERTIES OUTPUT_NAME H5Zecf)
 target_link_libraries(hdf5_ecf_plugin PUBLIC hdf5_ecf_codec ${HDF5_LIBRARIES})
