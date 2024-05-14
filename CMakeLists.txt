@@ -9,7 +9,7 @@
 
 cmake_minimum_required(VERSION 3.14.0)
 cmake_policy(SET CMP0087 NEW)
-project(hdf5_ecf VERSION 1.0.0)
+project(hdf5_ecf VERSION 1.0.1)
 set(HDF5_ECF_PROJECT_VERSION "${PROJECT_VERSION}" CACHE INTERNAL "")
 
 if(NOT CMAKE_BUILD_TYPE)
